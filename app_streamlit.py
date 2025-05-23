@@ -5,7 +5,7 @@ import requests
 import os
 from collections import Counter
 from datetime import datetime, timedelta
-import time
+import pytz
 
 # -------------------------------
 # Konfiguracja Streamlit
@@ -193,34 +193,16 @@ def show_main_app():
     with col2:
         st.title("📦 Licznik zamówień")
     
-    # Przycisk wylogowania
-    if st.button("🚪 Wyloguj", type="secondary"):
-        clear_auth_data()
-        st.rerun()
-    
-    # Auto-odświeżanie
-    if 'last_refresh' not in st.session_state:
-        st.session_state.last_refresh = time.time()
-    
-    # Sprawdzenie czy minęło 5 minut (300 sekund)
-    time_since_refresh = time.time() - st.session_state.last_refresh
-    
     # Przyciski
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔄 Odśwież teraz", type="primary"):
-            st.session_state.last_refresh = time.time()
+        if st.button("🔄 Odśwież dane", type="primary"):
             st.rerun()
     
     with col2:
-        time_to_next = max(0, 300 - int(time_since_refresh))
-        minutes, seconds = divmod(time_to_next, 60)
-        st.write(f"⏱️ Następne odświeżenie za: {minutes:02d}:{seconds:02d}")
-    
-    # Auto-odświeżanie co 5 minut
-    if time_since_refresh >= 300:
-        st.session_state.last_refresh = time.time()
-        st.rerun()
+        if st.button("🚪 Wyloguj", type="secondary"):
+            clear_auth_data()
+            st.rerun()
     
     # Pobieranie i wyświetlanie danych
     with st.spinner("Pobieranie danych..."):
@@ -253,8 +235,10 @@ def show_main_app():
             with col2:
                 st.metric("Status 28 (List przewozowy)", status_counts.get(28, 0))
             
-            # Informacja o ostatnim odświeżeniu
-            st.caption(f"Ostatnie odświeżenie: {datetime.now().strftime('%H:%M:%S')}")
+            # Informacja o ostatnim odświeżeniu - poprawiony czas na polską strefę
+            poland_tz = pytz.timezone('Europe/Warsaw')
+            current_time = datetime.now(poland_tz)
+            st.caption(f"Ostatnie odświeżenie: {current_time.strftime('%H:%M:%S')}")
             
         except Exception as e:
             st.error(f"❌ Błąd podczas pobierania danych: {str(e)}")
